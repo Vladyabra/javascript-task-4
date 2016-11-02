@@ -13,7 +13,8 @@ exports.query = function (collection) {
 
     var restrictions = parseRestrictions([].slice.call(arguments).slice(1));
 
-    if (!restrictions.fields || restrictions.fields.length === 0) {
+    if (!restrictions.fields || restrictions.fields.length === 0 ||
+        restrictions.limit !== undefined && restrictions.limit === 1) {
         return [];
     }
 
