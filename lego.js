@@ -7,7 +7,7 @@
 exports.isStar = false;
 
 exports.query = function (collection) {
-    if (collection.length === 0 || arguments.length === 0) {
+    if (collection.length === 0 || arguments.length === 1) {
         return collection;
     }
 
