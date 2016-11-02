@@ -115,9 +115,9 @@ function applyRestriction(restrictions, cur) {
 
 function applyLimit(restrictions, cur) {
     if (restrictions.limit === undefined) {
-        restrictions.limit = cur.limit;
+        restrictions.limit = cur.count;
     } else {
-        restrictions.limit = Math.min(restrictions.limit, cur.limit);
+        restrictions.limit = Math.min(restrictions.limit, cur.count);
     }
 }
 
@@ -171,7 +171,7 @@ function getResult(sortedCopy, restrictions) {
 
         result.push(getFormattedObject(e, restrictions));
 
-        if (restrictions.limit && result.length === restrictions.limit) {
+        if (restrictions.limit !== undefined && result.length === restrictions.limit) {
             break;
         }
     }
