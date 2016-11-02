@@ -60,7 +60,7 @@ function satisfyFilters(object, filters) {
         var value = object[filter.field];
 
         if (value === undefined) {
-            return false;
+            continue;
         }
 
         if (filter.values.indexOf(value) === -1) {
