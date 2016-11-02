@@ -68,7 +68,7 @@ var bestFriends = lego.query(
     friends,
 
     // Выбираем имена и email для праздничной рассылки
-    lego.select('name', 'gender', 'age', 'favoriteFruit', 'email'),
+    lego.select('name', 'gender', 'email'),
 
     // Отбираем только тех, кто любит Яблоки или Картофель (самое важное !!!)
     lego.filterIn('favoriteFruit', ['Яблоко', 'Картофель']),
