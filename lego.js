@@ -33,7 +33,7 @@ exports.select = function select() {
             for (var i = 0; i < properties.length; i++) {
                 var property = properties[i];
 
-                if (e[property] === undefined) {
+                if (!e.hasOwnProperty(property)) {
                     continue;
                 }
 
@@ -48,7 +48,7 @@ exports.select = function select() {
 exports.filterIn = function (property, values) {
     return function filterIn(collection) {
         return collection.filter(function (e) {
-            if (e[property] === undefined) {
+            if (!e.hasOwnProperty(property)) {
                 return true;
             }
 
@@ -71,7 +71,7 @@ exports.sortBy = function (property, order) {
 exports.format = function (property, formatter) {
     return function format(collection) {
         return collection.map(function (e) {
-            if (e[property] !== undefined) {
+            if (e.hasOwnProperty(property)) {
                 e[property] = formatter(e[property]);
             }
 
