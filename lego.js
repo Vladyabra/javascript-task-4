@@ -23,26 +23,7 @@ exports.query = function (collection) {
 
     var sortedCopy = copyAndSort(collection, restrictions.sortBy);
 
-    var result = [];
-
-    for (var i = 0; i < sortedCopy.length; i++) {
-        var e = sortedCopy[i];
-        if (satisfyFilters(e, restrictions.filters)) {
-            var cur = {};
-            for (var field of restrictions.fields) {
-                if (e[field] === undefined) continue;
-
-                cur[field] = e[field];
-                for (var format of restrictions.formats) {
-                    if (field === format.field) {
-                        cur[field] = format.formatter(cur[field]);
-                    }
-                }
-            }       
-            result.push(cur);
-        }
-        if (restrictions.limit && result.length === restrictions.limit) break;      
-    }
+    var result = getResult(sortedCopy, restrictions);
 
     return result;
 };
@@ -95,7 +76,7 @@ function satisfyFilters(object, filters) {
     for (var filter of filters) {
         var value = object[filter.field];
         if (value === undefined) continue;
-        if (filter.values.indexOf(value) == -1) {
+        if (filter.values.indexOf(value) === -1) {
             return false;
         }
     }
@@ -104,16 +85,16 @@ function satisfyFilters(object, filters) {
 
 function parseRestrictions(restcrictions) {
     var result = {}
-    
+
     result.fields = undefined;
     result.filters = [];
     result.sortBy = undefined;
     result.formats = [];
     result.limit = undefined;
-    
+
     for (var i = 0; i < restcrictions.length; i++) {
         var cur = restcrictions[i];
-        
+
         switch(cur.type) {
             case 'select':
                 if (result.fields === undefined) {
@@ -146,13 +127,13 @@ function parseRestrictions(restcrictions) {
                 break;
         }
     }
-    
+
     return result;
 }
 
 function copyAndSort(collection, sortBy) {
     var copy = [].slice.call(collection);
-    
+
     if (sortBy !== undefined) {
         copy.sort(function(a, b) {
             if (sortBy.order === 'asc') {
@@ -174,8 +155,36 @@ function copyAndSort(collection, sortBy) {
             }
         });
     }
-    
+
     return copy;
+}
+
+function getResult(sortedCopy, restrictions) {
+    var result = []
+
+    for (var i = 0; i < sortedCopy.length; i++) {
+        var e = sortedCopy[i];
+        if (satisfyFilters(e, restrictions.filters)) {
+            var cur = {};
+            for (var j = 0; j < restrictions.fields.length; j++) {
+                var field = restrictions.fields[j];
+
+                if (e[field] === undefined) continue;
+
+                cur[field] = e[field];
+                for (var k = 0; k < restrictions.formats.length; k++) {
+                    var format = restrictions.formats[k];
+                    if (field === format.field) {
+                        cur[field] = format.formatter(cur[field]);
+                    }
+                }
+            }       
+            result.push(cur);
+        }
+        if (restrictions.limit && result.length === restrictions.limit) break;      
+    }
+
+    return result;
 }
 
 /**
