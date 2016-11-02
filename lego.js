@@ -73,7 +73,8 @@ exports.sortBy = function (property, order) {
 };
 
 function satisfyFilters(object, filters) {
-    for (var filter of filters) {
+    for (var i = 0; i < filters.length; i++) {
+        var filter = filters[i];
         var value = object[filter.field];
         if (value === undefined) continue;
         if (filter.values.indexOf(value) === -1) {
