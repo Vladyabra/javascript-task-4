@@ -137,23 +137,13 @@ function copyAndSort(collection, sortBy) {
 
     if (sortBy !== undefined) {
         copy.sort(function (a, b) {
-            if (sortBy.order === 'asc') {
-                if (a[sortBy.field] < b[sortBy.field]) {
-                    return -1;
-                } else if (a[sortBy.field] > b[sortBy.field]) {
-                    return 1;
-                }
+            var multiply = sortBy.order === 'asc' ? 1 : -1;
 
-                return 0;
+            if (a[sortBy.field] === b[sortBy.field]) {
+                return multiply * (collection.indexOf(a) - collection.indexOf(b));
             }
 
-            if (a[sortBy.field] > b[sortBy.field]) {
-                return -1;
-            } else if (a[sortBy.field] < b[sortBy.field]) {
-                return 1;
-            }
-
-            return 0;
+            return multiply * (a[sortBy.field] < b[sortBy.field] ? -1 : 1);
         });
     }
 
