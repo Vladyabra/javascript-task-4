@@ -60,7 +60,7 @@ function satisfyFilters(object, filters) {
         var value = object[filter.field];
 
         if (value === undefined) {
-            continue;
+            return false;
         }
 
         if (filter.values.indexOf(value) === -1) {
@@ -175,9 +175,9 @@ function getFormattedObject(e, restrictions) {
     for (var j = 0; j < restrictions.fields.length; j++) {
         var field = restrictions.fields[j];
 
-        if (e[field] === undefined) {
-            continue;
-        }
+//        if (e[field] === undefined) {
+//            continue;
+//        }
 
         cur[field] = formatValue(field, e[field], restrictions);
     }
