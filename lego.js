@@ -9,7 +9,9 @@ exports.isStar = false;
 var orderOfCommands = ['sortBy', 'filterIn', 'selector', 'format', 'limit'];
 
 exports.query = function (collection) {
-    var result = collection.slice();
+    var result = collection.map(function (e) {
+        return Object.assign({}, e);
+    });
 
     var commands = [].slice.call(arguments).slice(1)
     .sort(function (a, b) {
