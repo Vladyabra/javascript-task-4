@@ -4,9 +4,9 @@
  * Сделано задание на звездочку
  * Реализованы методы or и and
  */
-exports.isStar = false;
+exports.isStar = true;
 
-var orderOfCommands = ['sortBy', 'filterIn', 'selector', 'format', 'limit'];
+var orderOfCommands = ['sortBy', 'filterIn', 'or', 'and', 'selector', 'format', 'limit'];
 
 exports.query = function (collection) {
     var result = collection.map(function (e) {
@@ -90,10 +90,34 @@ exports.limit = function (count) {
 
 if (exports.isStar) {
     exports.or = function () {
-        return;
+        var filters = [].slice.call(arguments);
+
+        return function or(collection) {
+            return collection.filter(function (e) {
+                for (var i = 0; i < filters.length; i++) {
+                    if (filters[i](collection).indexOf(e) !== -1) {
+                        return true;
+                    }
+                }
+
+                return false;
+            });
+        };
     };
 
     exports.and = function () {
-        return;
+        var filters = [].slice.call(arguments);
+
+        return function and(collection) {
+            return collection.filter(function (e) {
+                for (var i = 0; i < filters.length; i++) {
+                    if (filters[i](collection).indexOf(e) === -1) {
+                        return false;
+                    }
+                }
+
+                return true;
+            });
+        };
     };
 }
