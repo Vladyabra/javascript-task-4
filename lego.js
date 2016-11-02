@@ -17,83 +17,23 @@ exports.query = function (collection) {
         return collection;
     }
 
-    var fields = null;
-    var filters = [];
-    var sortBy = null;
-    var formats = [];
-    var limit = null;
+    var restrictions = parseRestrictions([].slice.call(arguments).slice(1));
 
-    for (var i = 1; i < arguments.length; i++) {
-        var cur = arguments[i];
-        if (!cur) continue;
-        switch(cur.type) {
-            case 'select':
-                if (!fields) {
-                    fields = cur.fields;
-                } else {
-                    fields = fields.filter(function(e) {
-                        return cur.fields.indexOf(e) !== -1;
-                    });
-                }
-                break;
+    if (!restrictions.fields || restrictions.fields.length === 0) return [];
 
-            case 'filterIn':
-                filters.push(cur);
-                break;
-
-            case 'sortBy':
-                sortBy = cur;
-                break;
-
-            case 'format':
-                formats.push(cur);
-                break;
-
-            case 'limit':
-                if (!limit) {
-                    limit = cur.limit;
-                } else {
-                    limit = Math.min(limit, cur.limit);
-                }
-                break;
-        }
-    }
-
-    if (!fields || fields.length === 0) return [];
-
-    collection = [].slice.call(collection);
-    if (sortBy) {
-        collection.sort(function(a, b) {
-            if (sortBy.order === 'asc') {
-                if (a[sortBy.field] < b[sortBy.field]) {
-                    return -1;
-                } else if (a[sortBy.field] > b[sortBy.field]) {
-                    return 1;
-                } else {
-                    return 0;
-                }
-            } else {
-                if (a[sortBy.field] > b[sortBy.field]) {
-                    return -1;
-                } else if (a[sortBy.field] < b[sortBy.field]) {
-                    return 1;
-                } else {
-                    return 0;
-                }
-            }
-        });
-    }
+    var sortedCopy = copyAndSort(collection, restrictions.sortBy);
 
     var result = [];
 
-    for (var e of collection) {
-        if (satisfyFilters(e, filters)) {
+    for (var i = 0; i < sortedCopy.length; i++) {
+        var e = sortedCopy[i];
+        if (satisfyFilters(e, restrictions.filters)) {
             var cur = {};
-            for (var field of fields) {
+            for (var field of restrictions.fields) {
                 if (e[field] === undefined) continue;
 
                 cur[field] = e[field];
-                for (var format of formats) {
+                for (var format of restrictions.formats) {
                     if (field === format.field) {
                         cur[field] = format.formatter(cur[field]);
                     }
@@ -101,7 +41,7 @@ exports.query = function (collection) {
             }       
             result.push(cur);
         }
-        if (limit && result.length == limit) break;      
+        if (restrictions.limit && result.length === restrictions.limit) break;      
     }
 
     return result;
@@ -160,6 +100,82 @@ function satisfyFilters(object, filters) {
         }
     }
     return true;
+}
+
+function parseRestrictions(restcrictions) {
+    var result = {}
+    
+    result.fields = undefined;
+    result.filters = [];
+    result.sortBy = undefined;
+    result.formats = [];
+    result.limit = undefined;
+    
+    for (var i = 0; i < restcrictions.length; i++) {
+        var cur = restcrictions[i];
+        
+        switch(cur.type) {
+            case 'select':
+                if (result.fields === undefined) {
+                    result.fields = cur.fields;
+                } else {
+                    result.fields = fields.filter(function(e) {
+                        return cur.fields.indexOf(e) !== -1;
+                    });
+                }
+                break;
+
+            case 'filterIn':
+                result.filters.push(cur);
+                break;
+
+            case 'sortBy':
+                result.sortBy = cur;
+                break;
+
+            case 'format':
+                result.formats.push(cur);
+                break;
+
+            case 'limit':
+                if (result.limit === undefined) {
+                    result.limit = cur.limit;
+                } else {
+                    result.limit = Math.min(result.limit, cur.limit);
+                }
+                break;
+        }
+    }
+    
+    return result;
+}
+
+function copyAndSort(collection, sortBy) {
+    var copy = [].slice.call(collection);
+    
+    if (sortBy !== undefined) {
+        copy.sort(function(a, b) {
+            if (sortBy.order === 'asc') {
+                if (a[sortBy.field] < b[sortBy.field]) {
+                    return -1;
+                } else if (a[sortBy.field] > b[sortBy.field]) {
+                    return 1;
+                } else {
+                    return 0;
+                }
+            } else {
+                if (a[sortBy.field] > b[sortBy.field]) {
+                    return -1;
+                } else if (a[sortBy.field] < b[sortBy.field]) {
+                    return 1;
+                } else {
+                    return 0;
+                }
+            }
+        });
+    }
+    
+    return copy;
 }
 
 /**
