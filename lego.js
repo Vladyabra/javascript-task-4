@@ -6,12 +6,6 @@
  */
 exports.isStar = false;
 
-/**
- * Запрос к коллекции
- * @param {Array} collection
- * @params {...Function} – Функции для запроса
- * @returns {Array}
- */
 exports.query = function (collection) {
     if (collection.length === 0 || arguments.length === 0) {
         return collection;
@@ -19,7 +13,9 @@ exports.query = function (collection) {
 
     var restrictions = parseRestrictions([].slice.call(arguments).slice(1));
 
-    if (!restrictions.fields || restrictions.fields.length === 0) return [];
+    if (!restrictions.fields || restrictions.fields.length === 0) {
+        return [];
+    }
 
     var sortedCopy = copyAndSort(collection, restrictions.sortBy);
 
@@ -28,12 +24,8 @@ exports.query = function (collection) {
     return result;
 };
 
-/**
- * Выбор полей
- * @params {...String}
- */
 exports.select = function select() {
-    var result = {}
+    var result = {};
 
     result.type = 'select';
     result.fields = [].slice.call(arguments);
@@ -41,14 +33,8 @@ exports.select = function select() {
     return result;
 };
 
-/**
-
- * Фильтрация поля по массиву значений
- * @param {String} property – Свойство для фильтрации
- * @param {Array} values – Доступные значения
- */
 exports.filterIn = function (property, values) {
-    var result = {}
+    var result = {};
 
     result.type = 'filterIn';
     result.field = property;
@@ -57,13 +43,8 @@ exports.filterIn = function (property, values) {
     return result;
 };
 
-/**
- * Сортировка коллекции по полю
- * @param {String} property – Свойство для фильтрации
- * @param {String} order – Порядок сортировки (asc - по возрастанию; desc – по убыванию)
- */
 exports.sortBy = function (property, order) {
-    var result = {}
+    var result = {};
 
     result.type = 'sortBy';
     result.field = property;
@@ -76,16 +57,21 @@ function satisfyFilters(object, filters) {
     for (var i = 0; i < filters.length; i++) {
         var filter = filters[i];
         var value = object[filter.field];
-        if (value === undefined) continue;
+
+        if (value === undefined) {
+            continue;
+        }
+
         if (filter.values.indexOf(value) === -1) {
             return false;
         }
     }
+
     return true;
 }
 
 function parseRestrictions(restcrictions) {
-    var result = {}
+    var result = {};
 
     result.fields = undefined;
     result.filters = [];
@@ -94,66 +80,79 @@ function parseRestrictions(restcrictions) {
     result.limit = undefined;
 
     for (var i = 0; i < restcrictions.length; i++) {
-        var cur = restcrictions[i];
-
-        switch(cur.type) {
-            case 'select':
-                if (result.fields === undefined) {
-                    result.fields = cur.fields;
-                } else {
-                    result.fields = fields.filter(function(e) {
-                        return cur.fields.indexOf(e) !== -1;
-                    });
-                }
-                break;
-
-            case 'filterIn':
-                result.filters.push(cur);
-                break;
-
-            case 'sortBy':
-                result.sortBy = cur;
-                break;
-
-            case 'format':
-                result.formats.push(cur);
-                break;
-
-            case 'limit':
-                if (result.limit === undefined) {
-                    result.limit = cur.limit;
-                } else {
-                    result.limit = Math.min(result.limit, cur.limit);
-                }
-                break;
-        }
+        applyRestriction(result, restcrictions[i]);
     }
 
     return result;
+}
+
+function applyRestriction(restrictions, cur) {
+    switch (cur.type) {
+        case 'select':
+            applySelect(restrictions, cur);
+            break;
+
+        case 'filterIn':
+            restrictions.filters.push(cur);
+            break;
+
+        case 'sortBy':
+            restrictions.sortBy = cur;
+            break;
+
+        case 'format':
+            restrictions.formats.push(cur);
+            break;
+
+        case 'limit':
+            applyLimit(restrictions, cur);
+            break;
+
+        default:
+            break;
+    }
+}
+
+function applyLimit(restrictions, cur) {
+    if (restrictions.limit === undefined) {
+        restrictions.limit = cur.limit;
+    } else {
+        restrictions.limit = Math.min(restrictions.limit, cur.limit);
+    }
+}
+
+function applySelect(restrictions, cur) {
+    if (restrictions.fields === undefined) {
+        restrictions.fields = cur.fields;
+    } else {
+        restrictions.fields = restrictions.fields.filter(function (e) {
+            return cur.fields.indexOf(e) !== -1;
+        });
+    }
 }
 
 function copyAndSort(collection, sortBy) {
     var copy = [].slice.call(collection);
 
     if (sortBy !== undefined) {
-        copy.sort(function(a, b) {
+        copy.sort(function (a, b) {
             if (sortBy.order === 'asc') {
                 if (a[sortBy.field] < b[sortBy.field]) {
                     return -1;
                 } else if (a[sortBy.field] > b[sortBy.field]) {
                     return 1;
-                } else {
-                    return 0;
                 }
-            } else {
-                if (a[sortBy.field] > b[sortBy.field]) {
-                    return -1;
-                } else if (a[sortBy.field] < b[sortBy.field]) {
-                    return 1;
-                } else {
-                    return 0;
-                }
+
+                return 0;
             }
+
+            if (a[sortBy.field] > b[sortBy.field]) {
+                return -1;
+            } else if (a[sortBy.field] < b[sortBy.field]) {
+                return 1;
+            }
+
+            return 0;
         });
     }
 
@@ -161,40 +160,54 @@ function copyAndSort(collection, sortBy) {
 }
 
 function getResult(sortedCopy, restrictions) {
-    var result = []
+    var result = [];
 
     for (var i = 0; i < sortedCopy.length; i++) {
         var e = sortedCopy[i];
-        if (satisfyFilters(e, restrictions.filters)) {
-            var cur = {};
-            for (var j = 0; j < restrictions.fields.length; j++) {
-                var field = restrictions.fields[j];
 
-                if (e[field] === undefined) continue;
-
-                cur[field] = e[field];
-                for (var k = 0; k < restrictions.formats.length; k++) {
-                    var format = restrictions.formats[k];
-                    if (field === format.field) {
-                        cur[field] = format.formatter(cur[field]);
-                    }
-                }
-            }       
-            result.push(cur);
+        if (!satisfyFilters(e, restrictions.filters)) {
+            continue;
         }
-        if (restrictions.limit && result.length === restrictions.limit) break;      
+
+        result.push(getFormattedObject(e, restrictions));
+
+        if (restrictions.limit && result.length === restrictions.limit) {
+            break;
+        }
     }
 
     return result;
 }
 
-/**
- * Форматирование поля
- * @param {String} property – Свойство для фильтрации
- * @param {Function} formatter – Функция для форматирования
- */
+function getFormattedObject(e, restrictions) {
+    var cur = {};
+    for (var j = 0; j < restrictions.fields.length; j++) {
+        var field = restrictions.fields[j];
+
+        if (e[field] === undefined) {
+            continue;
+        }
+
+        cur[field] = formatValue(field, e[field], restrictions);
+
+    }
+
+    return cur;
+}
+
+function formatValue(field, value, restrictions) {
+    for (var k = 0; k < restrictions.formats.length; k++) {
+        var format = restrictions.formats[k];
+        if (field === format.field) {
+            value = format.formatter(value);
+        }
+    }
+
+    return value;
+}
+
 exports.format = function (property, formatter) {
-    var result = {}
+    var result = {};
 
     result.type = 'format';
     result.field = property;
@@ -203,12 +216,8 @@ exports.format = function (property, formatter) {
     return result;
 };
 
-/**
- * Ограничение количества элементов в коллекции
- * @param {Number} count – Максимальное количество элементов
- */
 exports.limit = function (count) {
-    var result = {}
+    var result = {};
 
     result.type = 'limit';
     result.count = count;
@@ -217,21 +226,10 @@ exports.limit = function (count) {
 };
 
 if (exports.isStar) {
-
-    /**
-     * Фильтрация, объединяющая фильтрующие функции
-     * @star
-     * @params {...Function} – Фильтрующие функции
-     */
     exports.or = function () {
         return;
     };
 
-    /**
-     * Фильтрация, пересекающая фильтрующие функции
-     * @star
-     * @params {...Function} – Фильтрующие функции
-     */
     exports.and = function () {
         return;
     };
