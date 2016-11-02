@@ -65,7 +65,7 @@ exports.sortBy = function (property, order) {
         return collection.sort(function (a, b) {
             var multiply = order === 'asc' ? 1 : -1;
 
-            return multiply * a[property] <= b[property] ? -1 : 1;
+            return multiply * (a[property] <= b[property] ? -1 : 1);
         });
     };
 };
