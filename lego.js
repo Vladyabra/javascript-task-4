@@ -6,7 +6,7 @@
  */
 exports.isStar = false;
 
-var orderOfCommands = ['orderBy', 'filterIn', 'selector', 'format', 'limit'];
+var orderOfCommands = ['sortBy', 'filterIn', 'selector', 'format', 'limit'];
 
 exports.query = function (collection) {
     var result = collection.slice();
