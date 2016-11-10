@@ -6,21 +6,20 @@
  */
 exports.isStar = true;
 
-var orderOfCommands = ['sortBy', 'filterIn', 'or', 'and', 'selector', 'format', 'limit'];
+var ORDER_OF_COMMANDS = ['filterIn', 'sortBy', 'or', 'and', 'selector', 'limit', 'format'];
 
 exports.query = function (collection) {
     var result = collection.map(function (e) {
         return Object.assign({}, e);
     });
 
-    var commands = [].slice.call(arguments).slice(1)
-    .sort(function (a, b) {
-        return orderOfCommands.indexOf(a.name) - orderOfCommands.indexOf(b.name);
+    var commands = [].slice.call(arguments, 1).sort(function (a, b) {
+        return ORDER_OF_COMMANDS.indexOf(a.name) - ORDER_OF_COMMANDS.indexOf(b.name);
     });
 
-    for (var i = 0; i < commands.length; i++) {
-        result = commands[i](result);
-    }
+    result = commands.reduce(function (prev, next) {
+        return next(prev);
+    }, result);
 
     return result;
 };
