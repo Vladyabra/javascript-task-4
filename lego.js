@@ -9,8 +9,8 @@ exports.isStar = true;
 var ORDER_OF_COMMANDS = ['filterIn', 'sortBy', 'or', 'and', 'selector', 'limit', 'format'];
 
 exports.query = function (collection) {
-    var result = collection.map(function (e) {
-        return Object.assign({}, e);
+    var result = collection.map(function (entry) {
+        return Object.assign({}, entry);
     });
 
     var commands = [].slice.call(arguments, 1).sort(function (a, b) {
@@ -28,18 +28,16 @@ exports.select = function select() {
     var properties = [].slice.call(arguments);
 
     return function selector(collection) {
-        return collection.map(function (e) {
+        return collection.map(function (entry) {
             var result = {};
 
-            for (var i = 0; i < properties.length; i++) {
-                var property = properties[i];
-
-                if (!e.hasOwnProperty(property)) {
-                    continue;
+            properties.map(function (property) {
+                if (entry.hasOwnProperty(property)) {
+                    result[property] = entry[property];
                 }
 
-                result[property] = e[property];
-            }
+                return null;
+            });
 
             return result;
         });
@@ -48,12 +46,12 @@ exports.select = function select() {
 
 exports.filterIn = function (property, values) {
     return function filterIn(collection) {
-        return collection.filter(function (e) {
-            if (!e.hasOwnProperty(property)) {
+        return collection.filter(function (entry) {
+            if (!entry.hasOwnProperty(property)) {
                 return true;
             }
 
-            return values.indexOf(e[property]) !== -1;
+            return values.indexOf(entry[property]) !== -1;
         });
     };
 
@@ -71,12 +69,12 @@ exports.sortBy = function (property, order) {
 
 exports.format = function (property, formatter) {
     return function format(collection) {
-        return collection.map(function (e) {
-            if (e.hasOwnProperty(property)) {
-                e[property] = formatter(e[property]);
+        return collection.map(function (entry) {
+            if (entry.hasOwnProperty(property)) {
+                entry[property] = formatter(entry[property]);
             }
 
-            return e;
+            return entry;
         });
     };
 };
@@ -92,14 +90,10 @@ if (exports.isStar) {
         var filters = [].slice.call(arguments);
 
         return function or(collection) {
-            return collection.filter(function (e) {
-                for (var i = 0; i < filters.length; i++) {
-                    if (filters[i](collection).indexOf(e) !== -1) {
-                        return true;
-                    }
-                }
-
-                return false;
+            return collection.filter(function (entry) {
+                return filters.some(function (filter) {
+                    return filter(collection).indexOf(entry) !== -1;
+                });
             });
         };
     };
@@ -108,14 +102,10 @@ if (exports.isStar) {
         var filters = [].slice.call(arguments);
 
         return function and(collection) {
-            return collection.filter(function (e) {
-                for (var i = 0; i < filters.length; i++) {
-                    if (filters[i](collection).indexOf(e) === -1) {
-                        return false;
-                    }
-                }
-
-                return true;
+            return collection.filter(function (entry) {
+                return filters.every(function (filter) {
+                    return filter(collection).indexOf(entry) !== -1;
+                });
             });
         };
     };
