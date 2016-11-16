@@ -9,19 +9,24 @@ exports.isStar = true;
 var ORDER_OF_COMMANDS = ['filterIn', 'sortBy', 'or', 'and', 'selector', 'limit', 'format'];
 
 exports.query = function (collection) {
-    var result = collection.map(function (entry) {
-        return Object.assign({}, entry);
+    var collectionCopy = collection.map(function (entry) {
+        var copy = {};
+        var keys = Object.keys(entry);
+
+        for (var i = 0; i < keys.length; i++) {
+            copy[keys[i]] = entry[keys[i]];
+        }
+
+        return copy;
     });
 
     var commands = [].slice.call(arguments, 1).sort(function (a, b) {
         return ORDER_OF_COMMANDS.indexOf(a.name) - ORDER_OF_COMMANDS.indexOf(b.name);
     });
 
-    result = commands.reduce(function (prev, next) {
-        return next(prev);
-    }, result);
-
-    return result;
+    return commands.reduce(function (curCollection, command) {
+        return command(curCollection);
+    }, collectionCopy);
 };
 
 exports.select = function select() {
@@ -29,17 +34,13 @@ exports.select = function select() {
 
     return function selector(collection) {
         return collection.map(function (entry) {
-            var result = {};
-
-            properties.map(function (property) {
+            return properties.reduce(function (object, property) {
                 if (entry.hasOwnProperty(property)) {
-                    result[property] = entry[property];
+                    object[property] = entry[property];
                 }
 
-                return null;
-            });
-
-            return result;
+                return object;
+            }, {});
         });
     };
 };
