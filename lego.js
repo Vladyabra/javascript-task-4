@@ -11,11 +11,10 @@ var ORDER_OF_COMMANDS = ['filterIn', 'sortBy', 'or', 'and', 'selector', 'limit',
 exports.query = function (collection) {
     var collectionCopy = collection.map(function (entry) {
         var copy = {};
-        var keys = Object.keys(entry);
 
-        for (var i = 0; i < keys.length; i++) {
-            copy[keys[i]] = entry[keys[i]];
-        }
+        Object.keys(entry).forEach(function (key) {
+            copy[key] = entry[key];
+        });
 
         return copy;
     });
