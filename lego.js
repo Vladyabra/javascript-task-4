@@ -6,21 +6,26 @@
  */
 exports.isStar = true;
 
-var ORDER_OF_COMMANDS = ['filterIn', 'sortBy', 'or', 'and', 'selector', 'limit', 'format'];
+var ORDER_OF_COMMANDS = ['filterIn', 'sortBy', 'or', 'and', 'select', 'limit', 'format']
+.reduce(function (collection, name, i) {
+    collection[name] = i;
 
+    return collection;
+}, {});
+
+/**
+ * Запрос к коллекции
+ * @param {Array} collection
+ * @params {...Function} – Функции для запроса
+ * @returns {Array}
+ */
 exports.query = function (collection) {
     var collectionCopy = collection.map(function (entry) {
-        var copy = {};
-
-        Object.keys(entry).forEach(function (key) {
-            copy[key] = entry[key];
-        });
-
-        return copy;
+        return copyCollection(entry, Object.keys(entry));
     });
 
     var commands = [].slice.call(arguments, 1).sort(function (a, b) {
-        return ORDER_OF_COMMANDS.indexOf(a.name) - ORDER_OF_COMMANDS.indexOf(b.name);
+        return ORDER_OF_COMMANDS[a.name] - ORDER_OF_COMMANDS[b.name];
     });
 
     return commands.reduce(function (curCollection, command) {
@@ -28,22 +33,43 @@ exports.query = function (collection) {
     }, collectionCopy);
 };
 
-exports.select = function select() {
+/**
+ * Копирование полей объекта
+ * @param {Object} collection
+ * @param {Array} fields
+ * @returns {Object}
+ */
+function copyCollection(collection, fields) {
+    return fields.reduce(function (copy, field) {
+        if (collection.hasOwnProperty(field)) {
+            copy[field] = collection[field];
+        }
+
+        return copy;
+    }, {});
+}
+
+/**
+ * Выбор полей
+ * @params {...String}
+ * @returns {Function}
+ */
+exports.select = function () {
     var properties = [].slice.call(arguments);
 
-    return function selector(collection) {
+    return function select(collection) {
         return collection.map(function (entry) {
-            return properties.reduce(function (object, property) {
-                if (entry.hasOwnProperty(property)) {
-                    object[property] = entry[property];
-                }
-
-                return object;
-            }, {});
+            return copyCollection(entry, properties);
         });
     };
 };
 
+/**
+ * Фильтрация поля по массиву значений
+ * @param {String} property – Свойство для фильтрации
+ * @param {Array} values – Доступные значения
+ * @returns {Function}
+ */
 exports.filterIn = function (property, values) {
     return function filterIn(collection) {
         return collection.filter(function (entry) {
@@ -57,6 +83,12 @@ exports.filterIn = function (property, values) {
 
 };
 
+/**
+ * Сортировка коллекции по полю
+ * @param {String} property – Свойство для фильтрации
+ * @param {String} order – Порядок сортировки (asc - по возрастанию; desc – по убыванию)
+ * @returns {Function}
+ */
 exports.sortBy = function (property, order) {
     return function sortBy(collection) {
         return collection.sort(function (a, b) {
@@ -67,6 +99,12 @@ exports.sortBy = function (property, order) {
     };
 };
 
+/**
+ * Форматирование поля
+ * @param {String} property – Свойство для фильтрации
+ * @param {Function} formatter – Функция для форматирования
+ * @returns {Function}
+ */
 exports.format = function (property, formatter) {
     return function format(collection) {
         return collection.map(function (entry) {
@@ -79,6 +117,11 @@ exports.format = function (property, formatter) {
     };
 };
 
+/**
+ * Ограничение количества элементов в коллекции
+ * @param {Number} count – Максимальное количество элементов
+ * @returns {Function}
+ */
 exports.limit = function (count) {
     return function limit(collection) {
         return collection.slice(0, count);
@@ -86,6 +129,13 @@ exports.limit = function (count) {
 };
 
 if (exports.isStar) {
+
+    /**
+     * Фильтрация, объединяющая фильтрующие функции
+     * @star
+     * @params {...Function} – Фильтрующие функции
+     * @returns {Function}
+     */
     exports.or = function () {
         var filters = [].slice.call(arguments);
 
@@ -98,6 +148,12 @@ if (exports.isStar) {
         };
     };
 
+    /**
+     * Фильтрация, пересекающая фильтрующие функции
+     * @star
+     * @params {...Function} – Фильтрующие функции
+     * @returns {Function}
+     */
     exports.and = function () {
         var filters = [].slice.call(arguments);
 
