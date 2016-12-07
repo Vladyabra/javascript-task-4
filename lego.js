@@ -34,15 +34,15 @@ exports.query = function (collection) {
 };
 
 /**
- * Копирование полей объекта
+ * Копирование свойств объекта
  * @param {Object} collection
- * @param {Array} fields
+ * @param {Array} properties
  * @returns {Object}
  */
-function copyCollection(collection, fields) {
-    return fields.reduce(function (copy, field) {
-        if (collection.hasOwnProperty(field)) {
-            copy[field] = collection[field];
+function copyCollection(collection, properties) {
+    return properties.reduce(function (copy, property) {
+        if (collection.hasOwnProperty(property)) {
+            copy[property] = collection[property];
         }
 
         return copy;
